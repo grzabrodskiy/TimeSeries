@@ -1,0 +1,30 @@
+version: "2"
+
+services:
+  mongo:
+    image: mongo
+    environment: 
+      - MONGO_INITDB_DATABASE=admin
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootpassword
+    volumes:
+      - /data/db
+    hostname: mongo
+    ports:
+     - "27017-27019:27017-27019"
+  backend:
+    build: ./exnaton-backend
+    ports:
+      - "5000:80"
+    depends_on:
+      - mongo
+    environment: 
+      - PORT=80
+      - MONGO_HOST=mongo
+      - MONGO_USER=root
+      - MONGO_PASSWORD=rootpassword
+      - MONGO_DBNAME=admin
+      - EXNATON_BASE_URL=https://dev.exnaton.com/develop/api/v1
+      - EXNATON_USER=anonymous+challenge@exnaton.com
+      - EXNATON_PASSWORD=exnaton
+    restart: 'always'
