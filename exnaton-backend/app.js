@@ -52,6 +52,7 @@ async function checkMeasurmentsAndFillIfEmpty(db) {
         Cookie: sessionCookie,
       }      
     });
+    const measurements = measurementsResponse.data['data'];
     
     await db.createCollection('measurements');
     const measurmentsCollection = db.collection('measurements');
