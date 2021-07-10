@@ -7,9 +7,11 @@ const axios = require('axios').create({
 });
 const express = require('express')
 const bodyParser = require('body-parser')
+var cors = require('cors')
 
 const app = new express();
 app.use(bodyParser.json());
+app.use(cors());
 
 const mongoUri = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}/${process.env.MONGO_DBNAME}?retryWrites=true&w=majority`;
 const MongoClient = require('mongodb').MongoClient;
