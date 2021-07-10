@@ -50,12 +50,25 @@ async function checkMeasurmentsAndFillIfEmpty(db) {
       },
       headers:{
         Cookie: sessionCookie,
-      }      
+      }
     });
-    const measurements = measurementsResponse.data['data'];
-    
-    await db.createCollection('measurements');
-    const measurmentsCollection = db.collection('measurements');
-    await measurmentsCollection.insertMany(measurements);
+    const measurements = measurementsResponse.data['data'].map((measurement) => {
+      return { 
+        "measurement": measurement['measurement'],
+        "positiveEnergy": measurement['0100010700FF'],
+        "negativeEnergy": measurement['0100020700FF'],
+        "balanceEnergy": measurement['0100100700FF'],
+        "tags": measurement['tags'],
+        "timestamp": measurement['timestamp'],
+        "date": {
+          "year": new Date(measurement['timestamp']).getFullYear(),
+          "month": new Date(measurement['timestamp']).getMonth(),
+          "day": new Date(measurement['timestamp']).getDate(),
+          "dayOfWeek": new Date(measurement['timestamp']).getDay(),
+        }
+      };
+    });
+    await db.collection('measurements').createIndex({ "date.month": 1 });
+    await db.collection('measurements').insertMany(measurements);
   }
 }
