@@ -64,11 +64,13 @@ async function checkMeasurmentsAndFillIfEmpty(db) {
           "year": new Date(measurement['timestamp']).getFullYear(),
           "month": new Date(measurement['timestamp']).getMonth(),
           "day": new Date(measurement['timestamp']).getDate(),
-          "dayOfWeek": new Date(measurement['timestamp']).getDay(),
+          "weekday": new Date(measurement['timestamp']).getDay(),
         }
       };
     });
     await db.collection('measurements').createIndex({ "date.month": 1 });
+    await db.collection('measurements').createIndex({ "date.day": 1 });
+    await db.collection('measurements').createIndex({ "date.weekday": 1 });
     await db.collection('measurements').insertMany(measurements);
   }
 }
