@@ -47,7 +47,7 @@ async function checkMeasurmentsAndFillIfEmpty(db) {
       params: {
         muid: '7eb6cb7a-bd74-4fb3-9503-0867b737c2f6',
         start: '2021-05-01T00:00:00Z',
-        stop: '2021-07-01T23:59:59Z',
+        stop: '2021-06-30T23:59:59Z',
         limit: '1000000000'
       },
       headers:{

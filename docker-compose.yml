@@ -28,3 +28,13 @@ services:
       - EXNATON_USER=anonymous+challenge@exnaton.com
       - EXNATON_PASSWORD=exnaton
     restart: 'always'
+  frontend:
+    build: ./exnaton_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment: 
+      - BASE_URL=http://backend
+      - BASE_URL_PORT=5000
+    restart: 'always'
