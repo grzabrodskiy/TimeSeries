@@ -13,7 +13,6 @@ class ExnatonRepository extends IExnatonRepository {
 
   @override
   Future<List<Measurement>> getAllMeasurements() async {
-    await Future.delayed(Duration(seconds: 3));
     var response = await http.get(
       Uri.parse('$baseUrl/measurements'),
     );
