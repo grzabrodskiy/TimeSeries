@@ -10,8 +10,6 @@ class StatsWidget extends StatelessWidget {
   late num maximum;
 
   static const TextStyle textStyle = TextStyle(fontSize: 18);
-  static const f = NumberFormat("###.0000", "en_US");
-
 
   StatsWidget({Key? key, required List<Measurement> data}) : super(key: key) {
     num minimum = double.infinity;
@@ -38,18 +36,18 @@ class StatsWidget extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('μ = ${f.format(this.mean)}', style: textStyle),
+                Text('μ = ${this.mean}', style: textStyle),
                 SizedBox(height: 16),
-                Text('σ = ${f.format(this.deviation)}', style: textStyle),
+                Text('σ = ${this.deviation}', style: textStyle),
               ],
             ),
             SizedBox(width: 16.0),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('min = ${f.format(this.minimum)}', style: textStyle),
+                Text('min = ${this.minimum}', style: textStyle),
                 SizedBox(height: 16),
-                Text('max = ${f.format(this.maximum)}', style: textStyle),
+                Text('max = ${this.maximum}', style: textStyle),
               ],
             ),
           ],
