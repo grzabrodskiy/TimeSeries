@@ -21,5 +21,4 @@ jobs:
         with:
           flutter-version: '2.0.5'
       - run: cd exnaton_frontend && flutter pub get
-      - run: cd exnaton_frontend && flutter test
       - run: cd exnaton_frontend && flutter build web
