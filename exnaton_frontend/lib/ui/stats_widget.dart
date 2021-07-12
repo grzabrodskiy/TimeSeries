@@ -36,18 +36,18 @@ class StatsWidget extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('μ = ${this.mean}', style: textStyle),
+                Text('μ = ${this.mean.toStringAsFixed(4)}', style: textStyle),
                 SizedBox(height: 16),
-                Text('σ = ${this.deviation}', style: textStyle),
+                Text('σ = ${this.deviation.toStringAsFixed(4)}', style: textStyle),
               ],
             ),
             SizedBox(width: 16.0),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('min = ${this.minimum}', style: textStyle),
+                Text('min = ${this.minimum.toStringAsFixed(4)}', style: textStyle),
                 SizedBox(height: 16),
-                Text('max = ${this.maximum}', style: textStyle),
+                Text('max = ${this.maximum.toStringAsFixed(4)}', style: textStyle),
               ],
             ),
           ],
