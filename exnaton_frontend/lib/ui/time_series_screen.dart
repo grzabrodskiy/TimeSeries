@@ -25,9 +25,8 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
   @override
   void initState() {
     super.initState();
-    repository = const ExnatonRepository(
-        String.fromEnvironment('BASE_URL', defaultValue: 'http://localhost'),
-        port: int.fromEnvironment('BASE_URL_PORT', defaultValue: 5000));
+    repository =
+        ExnatonRepository('${Uri.base.scheme}://${Uri.base.host}', port: 5000);
   }
 
   @override

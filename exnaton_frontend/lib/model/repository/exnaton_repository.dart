@@ -10,7 +10,7 @@ class ExnatonRepository extends IExnatonRepository {
   final String baseUrl;
   final int port;
 
-  const ExnatonRepository(this.baseUrl, {this.port = 80});
+  ExnatonRepository(this.baseUrl, {this.port = 80});
 
   @override
   Future<List<Measurement>> getAllMeasurements() async {
