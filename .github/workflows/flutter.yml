@@ -20,7 +20,6 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           flutter-version: '2.0.5'
-      - run: cd exnaton_frontend
-      - run: flutter pub get
-      - run: flutter test
-      - run: flutter build web
+      - run: cd exnaton_frontend && flutter pub get
+      - run: cd exnaton_frontend && flutter test
+      - run: cd exnaton_frontend && flutter build web
