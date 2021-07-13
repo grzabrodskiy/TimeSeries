@@ -11,13 +11,16 @@ class ExnatonRepository extends IExnatonRepository {
   final int port;
 
   ExnatonRepository(this.baseUrl, {this.port = 80});
-
+  // overriding from the interface
+  // reading the measurements into the list of Measurement structures
   @override
   Future<List<Measurement>> getAllMeasurements() async {
     var response = await http.get(
       Uri.parse('$baseUrl:$port/measurements'),
     );
+    // success
     if (response.statusCode == 200) {
+      // read from JSON to Measurement structure
       var languages =
           jsonDecode(response.body)['measurements'] as List<dynamic>;
       return languages.map((e) {
