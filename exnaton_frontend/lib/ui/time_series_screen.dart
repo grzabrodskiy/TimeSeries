@@ -24,7 +24,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
   late final IExnatonRepository repository;
 
   DateTime? chosenDate; // data that is chosen on the righ
-  TimePeriod? timePeriod = TimePeriod.month; // radiobutton value (default to month)
+  TimePeriod timePeriod = TimePeriod.month; // radiobutton value (default to month)
   bool grouped = false; // checkbox value (default to unchecked)
 
   // read from backend API the list of measurements into repository variable
@@ -49,9 +49,11 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                 ? filteredMeasurements(
                     // ungrouped data - only take data for a specific time period
                     snapshot.data!,
-                    this.timePeriod!,
+                    this.timePeriod,
                     this.chosenDate ?? DateTime.parse(snapshot.data!.last.timestamp))
                 : snapshot.data!; // grouped data - take all the data
+            filteredData.sort(
+                (m1, m2) => DateTime.parse(m1.timestamp).millisecondsSinceEpoch - DateTime.parse(m2.timestamp).millisecondsSinceEpoch);
             return Row(
               children: [
                 Expanded(
@@ -70,30 +72,9 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                       Container(
                         // sizing the graph based on screen size
                         height: (MediaQuery.of(context).size.width * 0.7) * 9 / 16,
-                        child: charts.TimeSeriesChart(
-                          [
-                            getSeries(
-                                filteredData,
-                                this.timePeriod ?? TimePeriod.month, // take time period (month if not specified)
-                                this.chosenDate ?? // take selected date (first date if not selected)
-                                    DateTime.parse(snapshot.data![0].timestamp)),
-                          ],
-                          defaultRenderer: new charts.BarRendererConfig<DateTime>(),
-                          selectionModels: [
-                            charts.SelectionModelConfig(
-                              changedListener: (model) {
-                                if (!this.grouped && this.timePeriod != TimePeriod.hour && model.hasDatumSelection) {
-                                  final measurements = model.selectedDatum[0].datum as List<Measurement>;
-                                  final date = DateTime.parse(measurements[0].timestamp);
-                                  setState(() {
-                                    timePeriod = this.timePeriod!.less;
-                                    chosenDate = date;
-                                  });
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                        child: this.grouped
+                            ? _buildChartForGroupedData(context, filteredData)
+                            : _buildChartForUngroupedData(context, filteredData),
                       ),
                     ],
                   ),
@@ -117,6 +98,101 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
     );
   }
 
+  Widget _buildChartForUngroupedData(BuildContext context, List<Measurement> data) {
+    int Function(Measurement) keyFunction;
+    switch (this.timePeriod) {
+      case TimePeriod.hour:
+        keyFunction = (e) => DateTime.parse(e.timestamp).minute;
+        break;
+      case TimePeriod.day:
+        keyFunction = (e) => DateTime.parse(e.timestamp).hour;
+        break;
+      case TimePeriod.week:
+        keyFunction = (e) => DateTime.parse(e.timestamp).weekday;
+        break;
+      case TimePeriod.month:
+        keyFunction = (e) => DateTime.parse(e.timestamp).day;
+        break;
+      case TimePeriod.year:
+        keyFunction = (e) => DateTime.parse(e.timestamp).month;
+        break;
+    }
+    final series = charts.Series<List<Measurement>, DateTime>(
+      id: 'Measurements',
+      data: groupBy<Measurement, int>(data, keyFunction).values.toList(),
+      domainFn: (measurements, _) => DateTime.parse(measurements[0].timestamp),
+      measureFn: (measurements, _) =>
+          measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
+    );
+    return charts.TimeSeriesChart(
+      [series],
+      defaultRenderer: new charts.BarRendererConfig<DateTime>(),
+      selectionModels: [
+        charts.SelectionModelConfig(
+          changedListener: (model) {
+            if (model.hasDatumSelection) {
+              final measurements = model.selectedDatum[0].datum as List<Measurement>;
+              final date = DateTime.parse(measurements[0].timestamp);
+              setState(() {
+                timePeriod = this.timePeriod.less;
+                chosenDate = date;
+              });
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChartForGroupedData(BuildContext context, List<Measurement> data) {
+    int Function(Measurement) keyFunction;
+    switch (this.timePeriod) {
+      case TimePeriod.hour:
+        keyFunction = (e) => DateTime.parse(e.timestamp).minute;
+        break;
+      case TimePeriod.day:
+        keyFunction = (e) => DateTime.parse(e.timestamp).hour;
+        break;
+      case TimePeriod.week:
+        keyFunction = (e) => DateTime.parse(e.timestamp).weekday;
+        break;
+      case TimePeriod.month:
+        keyFunction = (e) => DateTime.parse(e.timestamp).day;
+        break;
+      case TimePeriod.year:
+        keyFunction = (e) => DateTime.parse(e.timestamp).month;
+        break;
+    }
+    DateFormat format;
+    switch (this.timePeriod) {
+      case TimePeriod.hour:
+        format = DateFormat("m");
+        break;
+      case TimePeriod.day:
+        format = DateFormat("H");
+        break;
+      case TimePeriod.week:
+        format = DateFormat.E();
+        break;
+      case TimePeriod.month:
+        format = DateFormat.d();
+        break;
+      case TimePeriod.year:
+        format = DateFormat.MMM();
+        break;
+    }
+    final series = charts.Series<List<Measurement>, String>(
+      id: 'Measurements',
+      data: groupBy<Measurement, int>(data, keyFunction).values.toList(),
+      domainFn: (measurements, _) => format.format(DateTime.parse(measurements[0].timestamp)),
+      measureFn: (measurements, _) =>
+          measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
+    );
+    return charts.BarChart(
+      [series],
+    );
+  }
+
   // periods graph
   Widget _buildPeriodsWidget(BuildContext context) {
     return Card(
@@ -133,7 +209,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                     groupValue: this.timePeriod,
                     // change state when different option is selected
                     onChanged: (newPeriod) => setState(() {
-                      this.timePeriod = newPeriod;
+                      this.timePeriod = newPeriod!;
                     }),
                   ),
                   Text(period.title)
@@ -237,39 +313,6 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
   Widget _buildErrorWidget(BuildContext context, Object? error) {
     return Center(
       child: Text("Unknown error"),
-    );
-  }
-
-  // setting up the chart series
-  charts.Series<dynamic, DateTime> getSeries(
-    List<Measurement> data,
-    TimePeriod period,
-    DateTime dateTime,
-  ) {
-    int Function(Measurement) keyFunction;
-    switch (period) {
-      case TimePeriod.hour:
-        keyFunction = (e) => DateTime.parse(e.timestamp).minute;
-        break;
-      case TimePeriod.day:
-        keyFunction = (e) => DateTime.parse(e.timestamp).hour;
-        break;
-      case TimePeriod.week:
-        keyFunction = (e) => DateTime.parse(e.timestamp).weekday;
-        break;
-      case TimePeriod.month:
-        keyFunction = (e) => DateTime.parse(e.timestamp).day;
-        break;
-      case TimePeriod.year:
-        keyFunction = (e) => DateTime.parse(e.timestamp).month;
-        break;
-    }
-    return charts.Series<List<Measurement>, DateTime>(
-      id: 'Measurements',
-      data: groupBy<Measurement, int>(data, keyFunction).values.toList(),
-      domainFn: (measurements, _) => DateTime.parse(measurements[0].timestamp),
-      measureFn: (measurements, _) =>
-          measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
     );
   }
 
