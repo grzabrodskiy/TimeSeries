@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 class TimeSeriesScreen extends StatefulWidget {
   // constructor
   TimeSeriesScreen({Key? key}) : super(key: key);
+
   // state creation method
   @override
   _TimeSeriesScreenState createState() => _TimeSeriesScreenState();
@@ -32,6 +33,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
     super.initState();
     repository = ExnatonRepository('${Uri.base.scheme}://${Uri.base.host}', port: 5000);
   }
+
   // describes widget UI (state-based)
   @override
   Widget build(BuildContext context) {
@@ -44,11 +46,11 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
         builder: (BuildContext context, AsyncSnapshot<List<Measurement>> snapshot) {
           if (snapshot.hasData) {
             final filteredData = !this.grouped
-                ? filteredMeasurements( // ungrouped data - only take data for a specific time period
+                ? filteredMeasurements(
+                    // ungrouped data - only take data for a specific time period
                     snapshot.data!,
                     this.timePeriod!,
-                    this.chosenDate ??
-                        DateTime.parse(snapshot.data!.last.timestamp))
+                    this.chosenDate ?? DateTime.parse(snapshot.data!.last.timestamp))
                 : snapshot.data!; // grouped data - take all the data
             return Row(
               children: [
@@ -74,10 +76,23 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                                 filteredData,
                                 this.timePeriod ?? TimePeriod.month, // take time period (month if not specified)
                                 this.chosenDate ?? // take selected date (first date if not selected)
-                                    DateTime.parse(
-                                        snapshot.data![0].timestamp)),
+                                    DateTime.parse(snapshot.data![0].timestamp)),
                           ],
                           defaultRenderer: new charts.BarRendererConfig<DateTime>(),
+                          selectionModels: [
+                            charts.SelectionModelConfig(
+                              changedListener: (model) {
+                                if (!this.grouped && this.timePeriod != TimePeriod.hour && model.hasDatumSelection) {
+                                  final measurements = model.selectedDatum[0].datum as List<Measurement>;
+                                  final date = DateTime.parse(measurements[0].timestamp);
+                                  setState(() {
+                                    timePeriod = this.timePeriod!.less;
+                                    chosenDate = date;
+                                  });
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -101,6 +116,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
       ),
     );
   }
+
   // periods graph
   Widget _buildPeriodsWidget(BuildContext context) {
     return Card(
@@ -128,7 +144,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
               children: [
                 Checkbox(
                   value: this.grouped,
-                   // change state when different option is selected
+                  // change state when different option is selected
                   onChanged: (newValue) => setState(() {
                     this.grouped = newValue!;
                     this.chosenDate = null;
@@ -142,6 +158,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
       ),
     );
   }
+
   // list of measurements (date and value)
   Widget _buildMeasurementsList(BuildContext context, List<Measurement> data) {
     return ListView(
@@ -208,18 +225,21 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
       ],
     );
   }
+
   // progress indicator (never shown - we are moving too fast :)
   Widget _buildLoadingIndicator(BuildContext context) {
     return Center(
       child: CircularProgressIndicator(),
     );
   }
+
   // error indicator (hopefully never seen :)
   Widget _buildErrorWidget(BuildContext context, Object? error) {
     return Center(
       child: Text("Unknown error"),
     );
   }
+
   // setting up the chart series
   charts.Series<dynamic, DateTime> getSeries(
     List<Measurement> data,
@@ -252,9 +272,9 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
           measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
     );
   }
+
   // this method filters measurements based on time perod (day/week/month) and date selected (dateTime)
-  List<Measurement> filteredMeasurements(
-      List<Measurement> data, TimePeriod period, DateTime dateTime) {
+  List<Measurement> filteredMeasurements(List<Measurement> data, TimePeriod period, DateTime dateTime) {
     switch (period) {
       case TimePeriod.hour:
         return data.where((e) => DateTime.parse(e.timestamp).withoutMinutes == dateTime.withoutMinutes).toList();
@@ -275,6 +295,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
     }
   }
 }
+
 // time period allowed values
 enum TimePeriod { hour, day, week, month, year }
 
@@ -292,6 +313,21 @@ extension TimePeriodExtension on TimePeriod {
         return "Month";
       case TimePeriod.year:
         return "Year";
+    }
+  }
+
+  TimePeriod get less {
+    switch (this) {
+      case TimePeriod.hour:
+        return TimePeriod.hour;
+      case TimePeriod.day:
+        return TimePeriod.hour;
+      case TimePeriod.week:
+        return TimePeriod.day;
+      case TimePeriod.month:
+        return TimePeriod.day;
+      case TimePeriod.year:
+        return TimePeriod.month;
     }
   }
 }
