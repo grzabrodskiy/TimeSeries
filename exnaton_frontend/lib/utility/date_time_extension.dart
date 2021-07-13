@@ -1,9 +1,12 @@
 import 'package:intl/intl.dart';
 
+// extending DateTime class tfor a few methods
+
 extension DateTimeExtension on DateTime {
 
+  // remove time from date-time 
   DateTime get withoutTime => DateTime(this.year, this.month, this.day);
-
+  // remove minutes from date-time
   DateTime get withoutMinutes => DateTime(this.year, this.month, this.day, this.hour);
 
   /// Calculates number of weeks for a given year as per https://en.wikipedia.org/wiki/ISO_week_date#Weeks_per_year

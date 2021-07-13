@@ -1,3 +1,5 @@
+// Measurement data structure
+
 class Measurement {
   final String measurement;
   final double positiveEnergy;
