@@ -25,8 +25,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
   @override
   void initState() {
     super.initState();
-    repository =
-        ExnatonRepository('${Uri.base.scheme}://${Uri.base.host}', port: 5000);
+    repository = ExnatonRepository('${Uri.base.scheme}://${Uri.base.host}', port: 5000);
   }
 
   @override
@@ -37,15 +36,10 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
       ),
       body: FutureBuilder<List<Measurement>>(
         future: repository.getAllMeasurements(),
-        builder:
-            (BuildContext context, AsyncSnapshot<List<Measurement>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<List<Measurement>> snapshot) {
           if (snapshot.hasData) {
             final filteredData = !this.grouped
-                ? filteredMeasurements(
-                    snapshot.data!,
-                    this.timePeriod!,
-                    this.chosenDate ??
-                        DateTime.parse(snapshot.data!.last.timestamp))
+                ? filteredMeasurements(snapshot.data!, this.timePeriod!, this.chosenDate ?? DateTime.parse(snapshot.data!.last.timestamp))
                 : snapshot.data!;
             return Row(
               children: [
@@ -62,19 +56,13 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                         ],
                       ),
                       Container(
-                        height:
-                            (MediaQuery.of(context).size.width * 0.7) * 9 / 16,
+                        height: (MediaQuery.of(context).size.width * 0.7) * 9 / 16,
                         child: charts.TimeSeriesChart(
                           [
-                            getSeries(
-                                filteredData,
-                                this.timePeriod ?? TimePeriod.month,
-                                this.chosenDate ??
-                                    DateTime.parse(
-                                        snapshot.data![0].timestamp)),
+                            getSeries(filteredData, this.timePeriod ?? TimePeriod.month,
+                                this.chosenDate ?? DateTime.parse(snapshot.data![0].timestamp)),
                           ],
-                          defaultRenderer:
-                              new charts.BarRendererConfig<DateTime>(),
+                          defaultRenderer: new charts.BarRendererConfig<DateTime>(),
                         ),
                       ),
                     ],
@@ -177,13 +165,9 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                   child: Container(
                     padding: EdgeInsets.all(8.0),
                     child: Text(
-                      DateFormat("dd/MM/yyyy hh:mm")
-                          .format(DateTime.parse(m.timestamp)),
+                      DateFormat("dd/MM/yyyy hh:mm").format(DateTime.parse(m.timestamp)),
                       style: TextStyle(
-                        fontWeight:
-                            m.timestamp == this.chosenDate?.toIso8601String()
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                        fontWeight: m.timestamp == this.chosenDate?.toIso8601String() ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -194,10 +178,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
                     child: Text(
                       m.balanceEnergy.toStringAsFixed(4),
                       style: TextStyle(
-                        fontWeight:
-                            m.timestamp == this.chosenDate?.toIso8601String()
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                        fontWeight: m.timestamp == this.chosenDate?.toIso8601String() ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -241,48 +222,42 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {
       case TimePeriod.month:
         keyFunction = (e) => DateTime.parse(e.timestamp).day;
         break;
+      case TimePeriod.year:
+        keyFunction = (e) => DateTime.parse(e.timestamp).month;
+        break;
     }
     return charts.Series<List<Measurement>, DateTime>(
       id: 'Measurements',
       data: groupBy<Measurement, int>(data, keyFunction).values.toList(),
       domainFn: (measurements, _) => DateTime.parse(measurements[0].timestamp),
       measureFn: (measurements, _) =>
-          measurements.fold<double>(
-              0.0, (prevVal, element) => prevVal + element.balanceEnergy) /
-          measurements.length,
+          measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
     );
   }
 
-  List<Measurement> filteredMeasurements(
-      List<Measurement> data, TimePeriod period, DateTime dateTime) {
+  List<Measurement> filteredMeasurements(List<Measurement> data, TimePeriod period, DateTime dateTime) {
     switch (period) {
       case TimePeriod.hour:
-        return data
-            .where((e) =>
-                DateTime.parse(e.timestamp).withoutMinutes ==
-                dateTime.withoutMinutes)
-            .toList();
+        return data.where((e) => DateTime.parse(e.timestamp).withoutMinutes == dateTime.withoutMinutes).toList();
       case TimePeriod.day:
-        return data
-            .where((e) =>
-                DateTime.parse(e.timestamp).withoutTime == dateTime.withoutTime)
-            .toList();
+        return data.where((e) => DateTime.parse(e.timestamp).withoutTime == dateTime.withoutTime).toList();
       case TimePeriod.week:
         return data.where((e) {
           final edate = DateTime.parse(e.timestamp);
-          return edate.year == dateTime.year &&
-              edate.weekNumber == dateTime.weekNumber;
+          return edate.year == dateTime.year && edate.weekNumber == dateTime.weekNumber;
         }).toList();
       case TimePeriod.month:
         return data.where((e) {
           final edate = DateTime.parse(e.timestamp);
           return edate.year == dateTime.year && edate.month == dateTime.month;
         }).toList();
+      case TimePeriod.year:
+        return data.where((e) => DateTime.parse(e.timestamp).year == dateTime.year).toList();
     }
   }
 }
 
-enum TimePeriod { hour, day, week, month }
+enum TimePeriod { hour, day, week, month, year }
 
 extension TimePeriodExtension on TimePeriod {
   String get title {
@@ -295,6 +270,8 @@ extension TimePeriodExtension on TimePeriod {
         return "Week";
       case TimePeriod.month:
         return "Month";
+      case TimePeriod.year:
+        return "Year";
     }
   }
 }
