@@ -139,6 +139,7 @@ class _TimeSeriesScreenState extends State<TimeSeriesScreen> {// define State of
       measureFn: (measurements, _) => 
           
           // groupping measurements by averaging values (like java8 reduce:0 + sum (elements)/size) 
+          // fold starts with 0.0 and adds e.balanceEnergy foreach (element to running sum (like Java8 stream)
           measurements.fold<double>(0.0, (prevVal, element) => prevVal + element.balanceEnergy) / measurements.length,
     );
     return charts.TimeSeriesChart(
